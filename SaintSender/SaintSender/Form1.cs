@@ -12,24 +12,29 @@ using Message = ActiveUp.Net.Mail.Message;
 
 namespace SaintSender
 {
-    public partial class MainForm : Form
+    public partial class MessageLabel : Form
     {
         MailRepository mailRepository;
         IEnumerable<Message> emailList;
-        public MainForm()
+        User user;
+
+        public MessageLabel(User user)
         {
+            this.user = user;
             InitializeComponent();
             mailRepository = new MailRepository(
                         "imap.gmail.com",
                         993,
                         true,
-                        "lendahandcontact@gmail.com",
-                        "Jancsika13"
+                        user.Email,
+                        user.Password
                     );
 
             emailList = mailRepository.GetAllMails("inbox");
             ListViewInit();
             PopulateListView(emailList);
+            
+
         }
 
         private void ListViewInit()
@@ -99,6 +104,17 @@ namespace SaintSender
                     break;
                 }
             }
+        }
+
+        private void SendBtn_Click(object sender, EventArgs e)
+        {
+            if (ReceiverTxt.Text == "" || SubjectTxt.Text == "" || MessageTxt.Text == "")
+            {
+                MessageBox.Show("Please fill the text areas!", "Error");
+                return;
+            }
+
+
         }
     }
 }
