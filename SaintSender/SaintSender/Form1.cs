@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ActiveUp.Net.Mail;
+using System.Runtime;
+using System.Threading;
 using Message = ActiveUp.Net.Mail.Message;
 
 namespace SaintSender
@@ -16,26 +18,83 @@ namespace SaintSender
     {
         MailRepository mailRepository;
         IEnumerable<Message> emailList;
+        MailBox mailbox;
         User user;
+        private BackgroundWorker _worker;
 
         public MessageLabel(User user)
         {
             this.user = user;
             InitializeComponent();
-            mailRepository = new MailRepository(
-                        "imap.gmail.com",
-                        993,
-                        true,
-                        user.Email,
-                        user.Password
-                    );
+            try
+            {
+                mailRepository = new MailRepository(
+                "imap.gmail.com",
+                993,
+                true,
+                user.Email,
+                user.Password
+            );
 
-            emailList = mailRepository.GetAllMails("inbox");
+                emailList = mailRepository.GetAllMails("inbox");
+                mailbox = new MailBox(emailList);
+                mailbox.Serialize();
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                mailbox = MailBox.Deserialize();
+                emailList = mailbox.emailList;
+            }
+
+
             ListViewInit();
             PopulateListView(emailList);
-            
+            InitWorker();
+            timer1.Enabled = true;
+
 
         }
+
+        private void InitWorker()
+        {
+            if (_worker != null)
+            {
+                _worker.Dispose();
+            }
+
+            _worker = new BackgroundWorker
+            {
+                WorkerReportsProgress = true,
+                WorkerSupportsCancellation = true
+            };
+            _worker.DoWork += DoWork;
+            _worker.RunWorkerCompleted += RunWorkerCompleted;
+            _worker.RunWorkerAsync();
+        }
+
+        void DoWork(object sender, DoWorkEventArgs e)
+        {
+            try
+            {
+
+                emailList = mailRepository.GetAllMails("inbox");
+                mailbox = new MailBox(emailList);
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                mailbox = MailBox.Deserialize();
+                emailList = mailbox.emailList;
+            }
+        }
+
+        void RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            mailbox.Serialize();
+            PopulateListView(emailList);
+        }
+
+
+
 
         private void ListViewInit()
         {
@@ -77,7 +136,7 @@ namespace SaintSender
                 List<Message> newList = new List<Message>();
                 foreach (Message email in emailList)
                 {
-                    if(email.From.ToString().Contains(Search.Text) || email.BodyText.ToString().Contains(Search.Text) || email.Subject.ToString().Contains(Search.Text))
+                    if (email.From.ToString().Contains(Search.Text) || email.BodyText.ToString().Contains(Search.Text) || email.Subject.ToString().Contains(Search.Text))
                     {
                         newList.Add(email);
                     }
@@ -113,8 +172,18 @@ namespace SaintSender
                 MessageBox.Show("Please fill the text areas!", "Error");
                 return;
             }
+            string to = ReceiverTxt.Text;
+            string subject = SubjectTxt.Text;
+            string body = MessageTxt.Text;
+            MailRepository.QuickSend(user.Email, to, subject, body, user.Email, user.Password);
+            ReceiverTxt.Text = "";
+            SubjectTxt.Text = "";
+            MessageTxt.Text = "";
+        }
 
-
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            InitWorker();
         }
     }
 }

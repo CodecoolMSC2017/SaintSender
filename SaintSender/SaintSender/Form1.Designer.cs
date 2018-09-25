@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.Emails = new System.Windows.Forms.ListView();
             this.Search = new System.Windows.Forms.TextBox();
             this.ReceiverLabel = new System.Windows.Forms.Label();
@@ -37,6 +38,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.MessageTxt = new System.Windows.Forms.TextBox();
             this.SendBtn = new System.Windows.Forms.Button();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // Emails
@@ -59,7 +61,7 @@
             // ReceiverLabel
             // 
             this.ReceiverLabel.AutoSize = true;
-            this.ReceiverLabel.Location = new System.Drawing.Point(1005, 48);
+            this.ReceiverLabel.Location = new System.Drawing.Point(998, 48);
             this.ReceiverLabel.Name = "ReceiverLabel";
             this.ReceiverLabel.Size = new System.Drawing.Size(50, 13);
             this.ReceiverLabel.TabIndex = 2;
@@ -115,6 +117,11 @@
             this.SendBtn.UseVisualStyleBackColor = true;
             this.SendBtn.Click += new System.EventHandler(this.SendBtn_Click);
             // 
+            // timer1
+            // 
+            this.timer1.Interval = 10000;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
             // MessageLabel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -148,6 +155,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox MessageTxt;
         private System.Windows.Forms.Button SendBtn;
+        private System.Windows.Forms.Timer timer1;
     }
 }
 

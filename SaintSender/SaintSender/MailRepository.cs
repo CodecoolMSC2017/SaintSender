@@ -4,16 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ActiveUp.Net.Mail;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
+using System.Net.Mail;
 
 namespace SaintSender
 {
-    [Serializable]
+    
     class MailRepository
     {
-        private Imap4Client client;
+        private static Imap4Client client;
         IEnumerable<Message> emailList;
 
         public MailRepository(string mailServer, int port, bool ssl, string login, string password)
@@ -55,34 +53,28 @@ namespace SaintSender
             return messages;
         }
 
-        public void Serialize()
-        {
-            IFormatter formatter = new BinaryFormatter();
-            Stream stream = new FileStream("emails.dat",
-                 FileMode.Create,
-                 FileAccess.Write, FileShare.None);
-            formatter.Serialize(stream, this);
-            stream.Close();
-        }
+        
 
-        public static MailRepository Deserialize()
+        public static void QuickSend(string from, string to, string subject, string body, string email, string password)
         {
-            IFormatter formatter = new BinaryFormatter();
 
-            if (File.Exists("emails.dat"))
-            {
-                Stream stream = new FileStream("emails.dat",
-                                      FileMode.Open,
-                                      FileAccess.Read,
-                                      FileShare.Read);
-                MailRepository m = (MailRepository)formatter.Deserialize(stream);
-                stream.Close();
-                return m;
-            }
-            else
-            {
-                return null;
-            }
+
+            System.Net.Mail.SmtpClient client = new System.Net.Mail.SmtpClient();
+            client.Port = 587;
+            client.Host = "smtp.gmail.com";
+            client.EnableSsl = true;
+            client.Timeout = 10000;
+            client.DeliveryMethod = SmtpDeliveryMethod.Network;
+            client.UseDefaultCredentials = false;
+            client.Credentials = new System.Net.NetworkCredential(email, password);
+
+            MailMessage mm = new MailMessage(from, to,subject,body);
+            mm.BodyEncoding = UTF8Encoding.UTF8;
+            mm.DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure;
+
+            client.Send(mm);
+
+
         }
     }
 }
